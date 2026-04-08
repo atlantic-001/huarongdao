@@ -13,12 +13,29 @@
     <div class="app">
         <h2>华容道</h2>
 
+        <!-- ✅ 玩法说明 -->
+        <div class="desc">
+            移动棋子，把曹操移动到下方出口即成功。<br>
+            只能推动，不能跨越其他棋子。
+        </div>
+
         <div class="top-bar">
             <div>步数：<span id="steps">0</span></div>
             <button onclick="resetGame()">重开</button>
         </div>
 
-        <div id="board"></div>
+        <!-- ✅ 城墙容器 -->
+        <div class="wall">
+            <div id="board"></div>
+            <div class="exit"></div>
+        </div>
+
+        <!-- ✅ 排行榜 -->
+        <div class="ranking">
+            <h3>🏆 通关排行榜</h3>
+            <ul id="rankList"></ul>
+        </div>
+
     </div>
 
     <script src="script.js"></script>

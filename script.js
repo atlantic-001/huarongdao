@@ -1,9 +1,6 @@
-document.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-}, { passive: false });
-
 const board = document.getElementById('board');
 const stepsEl = document.getElementById('steps');
+const rankList = document.getElementById('rankList');
 
 const grid = 75;
 const COLS = 4;
@@ -34,8 +31,6 @@ let blocks = initBlocks();
 let current = null;
 let startX = 0;
 let startY = 0;
-let originX = 0;
-let originY = 0;
 let direction = null;
 
 function getName(id) {
@@ -69,7 +64,11 @@ function getMap(ignoreId = null) {
     return map;
 }
 
-function canMove(block, newX, newY) {
+// ✅ 只能移动一格 + 不越子
+function canMoveOne(block, dx, dy) {
+    const newX = block.x + dx;
+    const newY = block.y + dy;
+
     if (newX < 0 || newY < 0) return false;
     if (newX + block.w > COLS) return false;
     if (newY + block.h > ROWS) return false;
@@ -99,17 +98,9 @@ function render() {
 
         div.innerText = getName(b.id);
 
-        div.addEventListener('touchstart', (e) => {
-            current = b;
-            startX = e.touches[0].clientX;
-            startY = e.touches[0].clientY;
-
-            originX = b.x;
-            originY = b.y;
-            direction = null;
-
-            div.style.transition = 'none'; // 拖动时取消动画
-        });
+        // 👇 统一鼠标 + 触摸
+        div.addEventListener('mousedown', startDrag);
+        div.addEventListener('touchstart', startDrag);
 
         board.appendChild(div);
     });
@@ -117,60 +108,103 @@ function render() {
     stepsEl.innerText = stepCount;
 }
 
-document.addEventListener('touchmove', (e) => {
+function startDrag(e) {
+    e.preventDefault();
+
+    const point = e.touches ? e.touches[0] : e;
+
+    current = blocks[[...document.querySelectorAll('.block')].indexOf(e.target)];
+
+    startX = point.clientX;
+    startY = point.clientY;
+    direction = null;
+
+    document.addEventListener('mousemove', moveDrag);
+    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('touchmove', moveDrag, { passive: false });
+    document.addEventListener('touchend', endDrag);
+}
+
+function moveDrag(e) {
     if (!current) return;
 
-    const dx = e.touches[0].clientX - startX;
-    const dy = e.touches[0].clientY - startY;
+    const point = e.touches ? e.touches[0] : e;
+
+    const dx = point.clientX - startX;
+    const dy = point.clientY - startY;
 
     if (!direction) {
         direction = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
     }
+}
 
-    let moveX = direction === 'x' ? dx / grid : 0;
-    let moveY = direction === 'y' ? dy / grid : 0;
-
-    let newX = originX + moveX;
-    let newY = originY + moveY;
-
-    newX = Math.max(0, Math.min(COLS - current.w, newX));
-    newY = Math.max(0, Math.min(ROWS - current.h, newY));
-
-    const el = [...document.querySelectorAll('.block')][blocks.indexOf(current)];
-    if (el) {
-        el.style.left = newX * grid + 'px';
-        el.style.top = newY * grid + 'px';
-    }
-});
-
-document.addEventListener('touchend', (e) => {
+function endDrag(e) {
     if (!current) return;
 
-    const dx = (e.changedTouches[0].clientX - startX) / grid;
-    const dy = (e.changedTouches[0].clientY - startY) / grid;
+    const point = e.changedTouches ? e.changedTouches[0] : e;
 
-    let targetX = originX;
-    let targetY = originY;
+    const dx = point.clientX - startX;
+    const dy = point.clientY - startY;
 
-    if (direction === 'x') {
-        targetX = Math.round(originX + dx);
+    let dirX = 0;
+    let dirY = 0;
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+        dirX = dx > 20 ? 1 : dx < -20 ? -1 : 0;
     } else {
-        targetY = Math.round(originY + dy);
+        dirY = dy > 20 ? 1 : dy < -20 ? -1 : 0;
     }
 
-    if (canMove(current, targetX, targetY)) {
-        current.x = targetX;
-        current.y = targetY;
+    // ✅ 连续移动（直到被挡住）
+    let moved = false;
+    while (canMoveOne(current, dirX, dirY)) {
+        current.x += dirX;
+        current.y += dirY;
         stepCount++;
+        moved = true;
+
+        playMoveSound(); // 🔊 音效
     }
 
+    // ✅ 通关动画
     if (current.id === 'cao' && current.x === 1 && current.y === 3) {
-        setTimeout(() => alert(`通关！步数：${stepCount}`), 100);
+        animateWin();
+        return;
     }
 
     current = null;
     render();
-});
+
+    document.removeEventListener('mousemove', moveDrag);
+    document.removeEventListener('mouseup', endDrag);
+    document.removeEventListener('touchmove', moveDrag);
+    document.removeEventListener('touchend', endDrag);
+}
+
+const moveAudio = new Audio("move.mp3");
+
+function playMoveSound() {
+    moveAudio.currentTime = 0;
+    moveAudio.play();
+}
+
+function animateWin() {
+    const el = [...document.querySelectorAll('.block')]
+    [blocks.findIndex(b => b.id === 'cao')];
+
+    if (!el) return;
+
+    // 往下滑出出口
+    el.style.transition = 'all 0.4s ease';
+    el.style.top = (ROWS * grid) + 'px';
+
+    setTimeout(() => {
+        const name = prompt("通关！请输入你的名字：") || "匿名";
+        saveRecord(name, stepCount);
+        alert(`通关成功！步数：${stepCount}`);
+        resetGame();
+    }, 500);
+}
 
 function resetGame() {
     blocks = initBlocks();
@@ -178,4 +212,34 @@ function resetGame() {
     render();
 }
 
+// 排行榜
+function saveRecord(name, steps) {
+    let list = JSON.parse(localStorage.getItem("rank") || "[]");
+
+    list.push({
+        name,
+        steps,
+        date: new Date().toLocaleDateString()
+    });
+
+    list.sort((a, b) => a.steps - b.steps);
+    list = list.slice(0, 3);
+
+    localStorage.setItem("rank", JSON.stringify(list));
+    renderRank();
+}
+
+function renderRank() {
+    const list = JSON.parse(localStorage.getItem("rank") || "[]");
+
+    rankList.innerHTML = '';
+
+    list.forEach((r, i) => {
+        const li = document.createElement('li');
+        li.innerText = `${i + 1}. ${r.name} - ${r.steps}步 (${r.date})`;
+        rankList.appendChild(li);
+    });
+}
+
 render();
+renderRank();
