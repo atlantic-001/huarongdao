@@ -1,0 +1,72 @@
+body {
+    margin: 0;
+    font-family: sans-serif;
+    background: #f5f5f5;
+    text-align: center;
+    touch-action: none;
+}
+
+.app {
+    max-width: 400px;
+    margin: auto;
+    padding: 10px;
+}
+
+h2 {
+    margin: 10px 0;
+}
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+button {
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: none;
+    background: #4dabf7;
+    color: white;
+}
+
+#board {
+    width: 300px;
+    height: 375px;
+    margin: auto;
+    position: relative;
+    background: #ddd;
+    border-radius: 10px;
+    border: 2px solid #333;
+}
+
+.block {
+    position: absolute;
+    border-radius: 10px;
+    border: 2px solid #333;
+    box-sizing: border-box;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-weight: bold;
+    transition: all 0.2s ease;
+    /* 🎯 动画核心 */
+}
+
+.cao {
+    background: #ff6b6b;
+}
+
+.vert {
+    background: #4dabf7;
+}
+
+.hori {
+    background: #51cf66;
+}
+
+.small {
+    background: #ffd43b;
+}
