@@ -1,3 +1,34 @@
+// Firebase 排行榜
+async function saveScore(name, steps) {
+    await db.collection("ranking").add({
+        name: name,
+        steps: steps,
+        time: new Date().toISOString()
+    });
+}
+
+async function loadRanking() {
+    const snapshot = await db.collection("ranking")
+        .orderBy("steps")
+        .limit(3)
+        .get();
+
+    const list = document.getElementById("rankingList");
+    list.innerHTML = "";
+
+    let rank = 1;
+
+    snapshot.forEach(doc => {
+        const data = doc.data();
+
+        const li = document.createElement("li");
+        li.innerText = `${rank}位：${data.name} - ${data.steps}步`;
+        list.appendChild(li);
+
+        rank++;
+    });
+}
+
 const board = document.getElementById('board');
 const stepsEl = document.getElementById('steps');
 const rankList = document.getElementById('rankList');
@@ -166,10 +197,18 @@ function endDrag(e) {
         playMoveSound(); // 🔊 音效
     }
 
-    // ✅ 通关动画
     if (current.id === 'cao' && current.x === 1 && current.y === 3) {
-        animateWin();
-        return;
+        setTimeout(async () => {
+            let name = prompt(`通关！步数：${stepCount}\n请输入你的名字`);
+
+            if (!name) name = "匿名";
+
+            await saveScore(name, stepCount);
+
+            await loadRanking();
+
+            resetGame(); // 自动重开
+        }, 100);
     }
 
     current = null;
@@ -188,23 +227,6 @@ function playMoveSound() {
     moveAudio.play();
 }
 
-function animateWin() {
-    const el = [...document.querySelectorAll('.block')]
-    [blocks.findIndex(b => b.id === 'cao')];
-
-    if (!el) return;
-
-    // 往下滑出出口
-    el.style.transition = 'all 0.4s ease';
-    el.style.top = (ROWS * grid) + 'px';
-
-    setTimeout(() => {
-        const name = prompt("通关！请输入你的名字：") || "匿名";
-        saveRecord(name, stepCount);
-        alert(`通关成功！步数：${stepCount}`);
-        resetGame();
-    }, 500);
-}
 
 function resetGame() {
     blocks = initBlocks();
@@ -243,3 +265,4 @@ function renderRank() {
 
 render();
 renderRank();
+loadRanking();

@@ -32,11 +32,31 @@
 
         <!-- ✅ 排行榜 -->
         <div class="ranking">
-            <h3>🏆 通关排行榜</h3>
-            <ul id="rankList"></ul>
+            <h3>🏆 排行榜 TOP3</h3>
+            <ul id="rankingList"></ul>
         </div>
 
     </div>
+
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAplTkIPv1AQSGrzFMcCLPcHUcA1iF3fDQ",
+            authDomain: "huarongdao-5616d.firebaseapp.com",
+            projectId: "huarongdao-5616d",
+            storageBucket: "huarongdao-5616d.firebasestorage.app",
+            messagingSenderId: "45209445324",
+            appId: "1:45209445324:web:5510670b77eed76942f369"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+    </script>
+
 
     <script src="script.js"></script>
 </body>
