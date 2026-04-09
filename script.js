@@ -22,7 +22,18 @@ async function loadRanking() {
         const data = doc.data();
 
         const li = document.createElement("li");
-        li.innerText = `${rank}位：${data.name} - ${data.steps}步`;
+        const date = new Date(data.time);
+
+        // 👉 格式化（日本常用格式）
+        const timeStr = date.toLocaleString('ja-JP', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        li.innerText = `${rank}位：${data.name} - ${data.steps}步 (${timeStr})`;
         list.appendChild(li);
 
         rank++;
@@ -31,7 +42,6 @@ async function loadRanking() {
 
 const board = document.getElementById('board');
 const stepsEl = document.getElementById('steps');
-const rankList = document.getElementById('rankList');
 
 const grid = 75;
 const COLS = 4;
@@ -67,11 +77,11 @@ let direction = null;
 function getName(id) {
     const map = {
         cao: '曹操',
-        v1: '关羽',
+        v1: '赵云',
         v2: '张飞',
-        v3: '赵云',
+        v3: '黄忠',
         v4: '马超',
-        h1: '黄忠',
+        h1: '关羽',
         s1: '兵',
         s2: '兵',
         s3: '兵',
@@ -234,35 +244,6 @@ function resetGame() {
     render();
 }
 
-// 排行榜
-function saveRecord(name, steps) {
-    let list = JSON.parse(localStorage.getItem("rank") || "[]");
-
-    list.push({
-        name,
-        steps,
-        date: new Date().toLocaleDateString()
-    });
-
-    list.sort((a, b) => a.steps - b.steps);
-    list = list.slice(0, 3);
-
-    localStorage.setItem("rank", JSON.stringify(list));
-    renderRank();
-}
-
-function renderRank() {
-    const list = JSON.parse(localStorage.getItem("rank") || "[]");
-
-    rankList.innerHTML = '';
-
-    list.forEach((r, i) => {
-        const li = document.createElement('li');
-        li.innerText = `${i + 1}. ${r.name} - ${r.steps}步 (${r.date})`;
-        rankList.appendChild(li);
-    });
-}
 
 render();
-renderRank();
 loadRanking();
